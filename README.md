@@ -53,4 +53,4 @@ webhook:
 ```
 
 ## License
-MIT
+This project is licensed under the Unlicense. You can use, modify, and distribute it without restriction.
