@@ -1,0 +1,4 @@
+apiVersion: v2
+name: kubevirt-velero-annotations-remover
+version: 0.1.0
+description: Webhook to remove Velero annotations from virt-launcher pods

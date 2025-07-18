@@ -1,0 +1,11 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: webhook-tls
+spec:
+  secretName: webhook-tls
+  dnsNames:
+    - kubevirt-velero-annotations-remover.{{ $.Release.Namespace }}.svc
+  issuerRef:
+    name: selfsigned-issuer
+    kind: Issuer

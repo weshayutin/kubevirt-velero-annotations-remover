@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubevirt-velero-annotations-remover
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubevirt-velero-annotations-remover
+  template:
+    metadata:
+      labels:
+        app: kubevirt-velero-annotations-remover
+    spec:
+      containers:
+        - name: webhook
+          image: python:3.11-slim
+          command: ["/bin/sh", "-c", "pip install flask && python /app/webhook.py"]
+          ports:
+            - containerPort: 443
+          volumeMounts:
+            - name: webhook-code
+              mountPath: /app/webhook.py
+              subPath: webhook.py
+            - name: tls
+              mountPath: /tls
+      volumes:
+        - name: webhook-code
+          configMap:
+            name: webhook-py
+        - name: tls
+          secret:
+            secretName: webhook-tls

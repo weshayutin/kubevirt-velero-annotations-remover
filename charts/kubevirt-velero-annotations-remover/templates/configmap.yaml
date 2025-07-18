@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webhook-py
+data:
+  webhook.py: |-
+{{ .Files.Get "webhook.py" | nindent 4 }}
