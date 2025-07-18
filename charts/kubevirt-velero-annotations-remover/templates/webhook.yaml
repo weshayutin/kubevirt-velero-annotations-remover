@@ -2,6 +2,8 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: kubevirt-velero-annotations-remover
+  annotations:
+    cert-manager.io/inject-ca-from: {{ $.Release.Namespace }}/webhook-tls
 webhooks:
   - name: kubevirt-velero-annotations-remover.{{ $.Release.Namespace }}.svc
     rules:
@@ -14,7 +16,7 @@ webhooks:
         name: kubevirt-velero-annotations-remover
         namespace: {{ $.Release.Namespace}}
         path: /mutate
-      caBundle: {{ index (lookup "v1" "Secret" .Release.Namespace "webhook-tls").data "ca.crt" | default "" }}
+      # caBundle is automatically injected by cert-manager
     admissionReviewVersions: ["v1"]
     sideEffects: None
     objectSelector:
