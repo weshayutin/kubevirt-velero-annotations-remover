@@ -111,3 +111,29 @@ The deployment includes OpenShift security best practices:
    ```bash
    oc get mutatingwebhookconfiguration kubevirt-velero-annotations-remover -o yaml
    ```
+
+## status of testing
+
+* pod runs
+```
+all -n openshift-adp
+Warning: apps.openshift.io/v1 DeploymentConfig is deprecated in v4.14+, unavailable in v4.10000+
+NAME                                                       READY   STATUS    RESTARTS   AGE
+pod/kubevirt-velero-annotations-remover-6f596dfb7b-h9zvd   1/1     Running   0          11m
+pod/node-agent-ckkrt                                       1/1     Running   0          34d
+pod/node-agent-mtrq6                                       1/1     Running   0          34d
+
+```
+
+* service is running
+```
+whayutin@fedora:~/OPENSHIFT/git/OADP/kubevirt-velero-annotations-remover$ oc logs -f pod/kubevirt-velero-annotations-remover-6f596dfb7b-h9zvd
+ * Serving Flask app 'webhook'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on https://127.0.0.1:8443
+ * Running on https://10.129.2.80:8443
+Press CTRL+C to quit
+```
+
