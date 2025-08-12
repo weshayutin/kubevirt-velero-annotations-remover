@@ -1,56 +1,113 @@
-# kubevirt-velero-annotations-remover Helm Chart
+# OpenShift Manifests for KubeVirt Velero Annotations Remover
 
-## Purpose
-This Helm chart deploys a Kubernetes Mutating Admission Webhook that automatically removes Velero-related annotations from `virt-launcher` pods created by KubeVirt. This helps prevent unwanted Velero backup/restore behaviors on these pods.
-
-## Features
-- MutatingWebhookConfiguration for `virt-launcher` pods
-- Automatic TLS certificate management using cert-manager
-- CA bundle injection via cert-manager annotation (no manual caBundle handling)
-- Minimal configuration required
+This directory contains static OpenShift YAML manifests converted from the original Helm charts. These manifests deploy a mutating webhook that removes Velero backup annotations from KubeVirt virt-launcher pods.
 
 ## Prerequisites
-- Kubernetes cluster (v1.16+ recommended)
-- [cert-manager](https://cert-manager.io/) installed in your cluster
-- [Helm](https://helm.sh/) 3.x
 
-## Installation
-1. **Install cert-manager** (if not already present):
-   ```sh
-   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
-   ```
+- OpenShift cluster with Service CA (default on OpenShift)
+- OADP (OpenShift API for Data Protection) operator installed
+- Sufficient permissions to create required resources in your namespace
 
-2. **Install the chart**:
-   ```sh
-   helm install kubevirt-velero-annotations-remover ./charts/kubevirt-velero-annotations-remover \
-     --namespace <your-namespace> --create-namespace
-   ```
+## Deployment
 
-## How it works
-- The webhook intercepts pod creation and update requests for pods labeled `kubevirt.io=virt-launcher`.
-- It removes any Velero-related annotations from these pods.
-- TLS certificates are automatically generated and managed by cert-manager.
-- The CA bundle is injected into the webhook configuration by cert-manager using the `cert-manager.io/inject-ca-from` annotation.
+### Build and push the container image (ARM64 or multi-arch)
 
-## Uninstallation
-```sh
-helm uninstall kubevirt-velero-annotations-remover --namespace <your-namespace>
+Use the helper to build either ARM64-only (for ARM64 clusters) or a multi-arch image (amd64+arm64). Example using a temporary ttl.sh image. Run these from the repository root:
+
+```bash
+DATE_STRING=`date +%s`
+IMAGE=ttl.sh/kubevirt-velero-annotations-remover-$DATE_STRING:8h
+
+# ARM64-only build (pushes to registry):
+./scripts/build-multiarch.sh arm64
+
+# OR multi-arch (amd64 + arm64) manifest:
+./scripts/build-multiarch.sh multi
+
+# The build script prints the image it pushed (line starting with "Done:").
+# Use that exact value as IMAGE for the render step below.
 ```
 
-## Notes
-- Make sure cert-manager is running and ready before installing this chart.
-- The webhook only affects pods with the label `kubevirt.io=virt-launcher`.
-- No manual CA or certificate management is required.
+### Option 1: Deploy individual manifests
+
+Apply the manifests in order (from this `openshift-manifests` directory). The `Service` will trigger OpenShift Service CA to create the `webhook-tls` secret used by the `Deployment`:
+
+```bash
+oc apply -f 01-pvc.yaml
+oc apply -f 02-service.yaml
+oc apply -f 03-webhook.yaml
+oc apply -f 04-deployment.yaml
+```
+
+### Option 2: Deploy all-in-one manifest
+
+```bash
+# From this `openshift-manifests` directory
+oc apply -f all-in-one.yaml
+
+# Or from the repo root
+oc apply -f openshift-manifests/all-in-one.yaml
+```
+
+### Option 3: Deploy all manifests at once
+
+Use the render script to substitute namespace and image (run from the repo root):
+
+```bash
+NAMESPACE=openshift-adp IMAGE=$IMAGE ./scripts/render.sh
+oc apply -f rendered/
+```
 
 ## Configuration
-You can override the following values in `values.yaml`:
 
-```yaml
-service:
-  port: 443
-webhook:
-  caBundle: "" # Not required, managed by cert-manager
+The manifests are configured to deploy in the `openshift-adp` namespace by default. To use a different namespace and/or image, use the render script:
+
+```bash
+NAMESPACE=my-namespace IMAGE=quay.io/my-org/my-image:tag ./scripts/render.sh
 ```
 
-## License
-This project is licensed under the Unlicense. You can use, modify, and distribute it without restriction.
+## How it works
+
+The webhook intercepts CREATE and UPDATE operations on pods with the label `kubevirt.io: virt-launcher` and removes any annotations that start with:
+- `pre.hook.backup.velero.io/`
+- `post.hook.backup.velero.io/`
+
+This prevents issues during Velero backups of KubeVirt VMs by removing problematic annotations from virt-launcher pods.
+
+### TLS with OpenShift Service CA
+
+These manifests use OpenShift's Service CA instead of cert-manager:
+- The `Service` has annotation `service.beta.openshift.io/serving-cert-secret-name: webhook-tls` which creates the TLS secret.
+- The `MutatingWebhookConfiguration` has annotation `service.beta.openshift.io/inject-cabundle: "true"` which injects the cluster CA bundle.
+- The `Deployment` mounts the `webhook-tls` secret at `/tls` and serves HTTPS on 8443.
+- The `Deployment` runs with `serviceAccountName: velero` in the target namespace.
+
+## Security
+
+The deployment includes OpenShift security best practices:
+- Non-root user execution
+- Dropped capabilities
+- Read-only root filesystem considerations
+- SecurityContext configuration
+
+## Troubleshooting
+
+1. Check if cert-manager is running:
+   ```bash
+   oc get pods -n cert-manager
+   ```
+
+2. Verify the serving certificate secret exists (created by Service CA after the Service is applied):
+   ```bash
+   oc get secret webhook-tls -n openshift-adp
+   ```
+
+3. Check webhook logs:
+   ```bash
+   oc logs -n openshift-adp deployment/kubevirt-velero-annotations-remover
+   ```
+
+4. Verify the webhook configuration:
+   ```bash
+   oc get mutatingwebhookconfiguration kubevirt-velero-annotations-remover -o yaml
+   ```
