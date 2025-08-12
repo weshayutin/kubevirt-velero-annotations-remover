@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubevirt-velero-annotations-remover
+  namespace: openshift-adp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubevirt-velero-annotations-remover
+  template:
+    metadata:
+      labels:
+        app: kubevirt-velero-annotations-remover
+    spec:
+      serviceAccountName: velero
+      containers:
+        - name: webhook
+          image: ttl.sh/kubevirt-velero-annotations-remover-1755021631:8h
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: tls
+              mountPath: /tls
+            - name: data
+              mountPath: /data
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: tls
+          secret:
+            secretName: webhook-tls
+        - name: data
+          persistentVolumeClaim:
+            claimName: webhook-data
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001

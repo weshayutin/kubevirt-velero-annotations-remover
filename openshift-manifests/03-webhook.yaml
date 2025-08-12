@@ -1,0 +1,25 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: kubevirt-velero-annotations-remover
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"
+webhooks:
+  - name: kubevirt-velero-annotations-remover.openshift-adp.svc
+    rules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+        operations: ["CREATE", "UPDATE"]
+    clientConfig:
+      service:
+        name: kubevirt-velero-annotations-remover
+        namespace: openshift-adp
+        path: /mutate
+        port: 443
+      # caBundle is automatically injected by cert-manager
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    objectSelector:
+      matchLabels:
+        kubevirt.io: virt-launcher
