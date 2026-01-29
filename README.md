@@ -137,3 +137,62 @@ WARNING: This is a development server. Do not use it in a production deployment.
  * Running on https://10.129.2.80:8443
 Press CTRL+C to quit
 ```
+
+## SUCCESS
+```
+2026-01-29 20:57:29,339 - werkzeug - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on https://127.0.0.1:8443
+ * Running on https://10.128.2.221:8443
+2026-01-29 20:57:29,339 - werkzeug - INFO - Press CTRL+C to quit
+2026-01-29 20:58:19,770 - webhook - INFO - Processing CREATE for VM 'my-windows-vm' (pod: unknown, namespace: my-windows-vm)
+2026-01-29 20:58:19,770 - webhook - INFO -   Removing annotation: post.hook.backup.velero.io/command = ["/usr/bin/virt-freezer", "--unfreeze", "--name", "my-windows-vm", "--namespace", "my-windows-vm"]
+2026-01-29 20:58:19,770 - webhook - INFO -   Removing annotation: post.hook.backup.velero.io/container = compute
+2026-01-29 20:58:19,770 - webhook - INFO -   Removing annotation: pre.hook.backup.velero.io/command = ["/usr/bin/virt-freezer", "--freeze", "--name", "my-windows-vm", "--namespace", "my-windows-vm"]
+2026-01-29 20:58:19,770 - webhook - INFO -   Removing annotation: pre.hook.backup.velero.io/container = compute
+2026-01-29 20:58:19,770 - webhook - INFO - Removed 4 Velero backup hook annotation(s) from VM 'my-windows-vm'
+2026-01-29 20:58:19,771 - werkzeug - INFO - 10.128.0.2 - - [29/Jan/2026 20:58:19] "POST /mutate?timeout=10s HTTP/1.1" 200 -
+2026-01-29 20:58:32,731 - webhook - INFO - Processing UPDATE for VM 'my-windows-vm' (pod: virt-launcher-my-windows-vm-g5hkx, namespace: my-windows-vm)
+2026-01-29 20:58:32,731 - webhook - INFO - No Velero annotations found on VM 'my-windows-vm' - no changes needed
+2026-01-29 20:58:32,731 - werkzeug - INFO - 10.128.0.2 - - [29/Jan/2026 20:58:32] "POST /mutate?timeout=10s HTTP/1.1" 200 -
+
+```
+
+## Inspecting VM Annotations
+
+### Check Velero-specific annotations on the virt-launcher pod
+
+```bash
+oc get pod -n <namespace> -l kubevirt.io=virt-launcher -o jsonpath='{.items[0].metadata.annotations}' | jq 'with_entries(select(.key | contains("velero")))'
+```
+
+If the webhook is working correctly, this should return `{}` (empty), confirming all Velero annotations were removed.
+
+### Check all annotations on the virt-launcher pod
+
+```bash
+oc get pod -n <namespace> -l kubevirt.io=virt-launcher -o jsonpath='{.items[0].metadata.annotations}' | jq
+```
+
+### Check VM object annotations
+
+Note: Backup hooks are on the pod, not the VM object itself.
+
+```bash
+oc get vm <vm-name> -n <namespace> -o jsonpath='{.metadata.annotations}' | jq
+```
+
+### Detailed view with YAML output
+
+```bash
+oc get pod -n <namespace> -l kubevirt.io=virt-launcher -o yaml | grep -A 20 "annotations:"
+```
+
+### Annotations Removed by the Webhook
+
+The webhook removes these four Velero backup hook annotations:
+
+- `pre.hook.backup.velero.io/container`
+- `pre.hook.backup.velero.io/command`
+- `post.hook.backup.velero.io/container`
+- `post.hook.backup.velero.io/command`
