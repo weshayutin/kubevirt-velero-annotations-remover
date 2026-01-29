@@ -72,7 +72,11 @@ spec:
       serviceAccountName: velero
       containers:
         - name: webhook
-          image: ttl.sh/kubevirt-velero-annotations-remover-1755021631:8h
+          image: quay.io/migtools/kubevirt-velero-annotations-remover:latest
+          imagePullPolicy: Always
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
           ports:
             - containerPort: 8443
           volumeMounts:

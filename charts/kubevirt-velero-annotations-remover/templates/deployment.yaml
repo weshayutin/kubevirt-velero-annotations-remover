@@ -14,20 +14,28 @@ spec:
     spec:
       containers:
         - name: webhook
-          image: python:3.11-slim
-          command: ["/bin/sh", "-c", "pip install flask && python /app/webhook.py"]
+          image: quay.io/migtools/kubevirt-velero-annotations-remover:latest
+          imagePullPolicy: Always
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
           ports:
-            - containerPort: 443
+            - containerPort: 8443
           volumeMounts:
-            - name: webhook-code
-              mountPath: /app/webhook.py
-              subPath: webhook.py
             - name: tls
               mountPath: /tls
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
       volumes:
-        - name: webhook-code
-          configMap:
-            name: webhook-py
         - name: tls
           secret:
             secretName: webhook-tls
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001

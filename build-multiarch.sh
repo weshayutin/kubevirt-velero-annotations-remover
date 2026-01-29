@@ -8,7 +8,9 @@ set -euo pipefail
 # Requires: podman 4+ (recommended). For docker, see README.
 
 DATE_STRING=`date +%s`
-IMAGE=ttl.sh/kubevirt-velero-annotations-remover-$DATE_STRING:8h
+# Test w/ ttl.sh
+#IMAGE=ttl.sh/kubevirt-velero-annotations-remover-$DATE_STRING:8h
+IMAGE=quay.io/migtools/kubevirt-velero-annotations-remover:latest
 MODE="${1:-multi}"   # values: arm64 | amd64 | multi
 
 case "$MODE" in

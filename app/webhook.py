@@ -1,6 +1,7 @@
 import json
 import sys
 import os
+import logging
 from flask import Flask, request, jsonify
 from base64 import b64encode
 
@@ -9,18 +10,44 @@ TLS_KEY = '/tls/tls.key'
 
 app = Flask(__name__)
 
+# Configure logging to show INFO level messages
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
+app.logger.setLevel(logging.INFO)
+
 @app.route('/mutate', methods=['POST'])
 def mutate():
     try:
         req = request.get_json()
-        app.logger.info(f"AdmissionReview request: {json.dumps(req)}")
+        
+        # Extract VM context information
         pod = req["request"]["object"]
+        pod_name = pod.get("metadata", {}).get("name", "unknown")
+        namespace = pod.get("metadata", {}).get("namespace", "unknown")
+        vm_name = pod.get("metadata", {}).get("labels", {}).get("kubevirt.io/domain", "unknown")
+        operation = req["request"].get("operation", "unknown")
+        
+        # Log processing start with VM details
+        app.logger.info(f"Processing {operation} for VM '{vm_name}' (pod: {pod_name}, namespace: {namespace})")
+        
+        # Process annotations and log each one being removed
         annotations = pod.get("metadata", {}).get("annotations", {})
         patch = []
         for key in list(annotations.keys()):
             if key.startswith("pre.hook.backup.velero.io/") or key.startswith("post.hook.backup.velero.io/"):
+                annotation_value = annotations[key]
+                app.logger.info(f"  Removing annotation: {key} = {annotation_value}")
                 patch.append({"op": "remove", "path": f"/metadata/annotations/{key.replace('/', '~1')}"})
-        app.logger.info(f"Generated patch: {patch}")
+        
+        # Log summary
+        if patch:
+            app.logger.info(f"Removed {len(patch)} Velero backup hook annotation(s) from VM '{vm_name}'")
+        else:
+            app.logger.info(f"No Velero annotations found on VM '{vm_name}' - no changes needed")
+        
         return jsonify({
             "apiVersion": "admission.k8s.io/v1",
             "kind": "AdmissionReview",
