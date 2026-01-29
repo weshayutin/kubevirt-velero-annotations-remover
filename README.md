@@ -8,6 +8,32 @@ This directory contains static OpenShift YAML manifests converted from the origi
 - OADP (OpenShift API for Data Protection) operator installed
 - Sufficient permissions to create required resources in your namespace
 
+## What does this code do?
+
+This project deploys a Kubernetes mutating admission webhook that automatically removes Velero backup hook annotations from KubeVirt virtual machine pods.
+
+### Background
+
+When KubeVirt creates a virt-launcher pod for a virtual machine, it automatically adds four Velero backup hook annotations:
+
+- `pre.hook.backup.velero.io/container` - Specifies the container to run the freeze command
+- `pre.hook.backup.velero.io/command` - Command to freeze the VM filesystem before backup
+- `post.hook.backup.velero.io/container` - Specifies the container to run the unfreeze command  
+- `post.hook.backup.velero.io/command` - Command to unfreeze the VM filesystem after backup
+
+These annotations instruct Velero to execute filesystem freeze/unfreeze operations using `virt-freezer` during backups. However, in certain scenarios, you may want to prevent these operations.
+
+### How it works
+
+The webhook operates as a Kubernetes mutating admission controller that:
+
+1. **Intercepts pod events**: Triggers on CREATE and UPDATE operations for pods with the `kubevirt.io=virt-launcher` label
+2. **Identifies annotations**: Scans for any annotations starting with `pre.hook.backup.velero.io/` or `post.hook.backup.velero.io/`
+3. **Removes annotations**: Generates a JSON patch to remove these annotations before the pod is persisted to etcd
+4. **Logs activity**: Provides detailed logging showing which VM, pod, and specific annotations were removed
+
+The webhook runs transparently in the background and requires no manual intervention once deployed.
+
 ## Deployment
 
 ### Build and push the container image (ARM64 or multi-arch)
