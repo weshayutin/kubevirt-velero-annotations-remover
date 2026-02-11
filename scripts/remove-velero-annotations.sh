@@ -5,6 +5,7 @@ set -euo pipefail
 ANNOTATIONS=(
   "pre.hook.backup.velero.io/container"
   "pre.hook.backup.velero.io/command"
+  "pre.hook.backup.velero.io/timeout"
   "post.hook.backup.velero.io/container"
   "post.hook.backup.velero.io/command"
 )
