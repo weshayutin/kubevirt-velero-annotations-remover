@@ -1,26 +1,38 @@
 # syntax=docker/dockerfile:1.6
-FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+# Build stage
+FROM golang:1.23-alpine AS builder
+
+# Build arguments for cross-compilation
+ARG TARGETOS=linux
+ARG TARGETARCH
+
+WORKDIR /build
+
+# Copy go module files
+COPY go.mod ./
+
+# Copy source code
+COPY main.go ./
+
+# Build the binary for the target architecture
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -installsuffix cgo -o webhook .
+
+# Runtime stage
+FROM alpine:latest
+
+# Create non-root user
+RUN adduser -u 1001 -D -H -G root appuser && \
+    mkdir -p /tls && chown -R appuser:root /tls
 
 WORKDIR /app
 
-# Create non-root user
-RUN useradd -u 1001 -r -g root -s /sbin/nologin -c "Nonroot User" appuser && \
-    mkdir -p /tls && chown -R appuser:root /app /tls
-
-# Install dependencies
-COPY requirements.txt /app/
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# Copy application code
-COPY app/ /app/
+# Copy binary from builder
+COPY --from=builder /build/webhook /app/webhook
 
 USER 1001
 EXPOSE 8443
 
-CMD ["python", "/app/webhook.py"]
+CMD ["/app/webhook"]
 
 

@@ -1,15 +1,18 @@
 .git
-**/__pycache__/
-**/*.pyc
-**/*.pyo
-**/*.pyd
 **/*.swp
 **/*.swo
-**/.pytest_cache/
-**/.mypy_cache/
 **/.DS_Store
-**/.venv
-**/venv
 **/.vscode
 **/.idea
+
+# Go build artifacts (don't copy into build context)
+webhook
+*.exe
+*.test
+*.out
+
+# Development files
+vendor/
+.cursor/
+terminals/
 

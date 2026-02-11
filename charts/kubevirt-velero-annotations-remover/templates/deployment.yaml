@@ -14,11 +14,8 @@ spec:
     spec:
       containers:
         - name: webhook
-          image: quay.io/migtools/kubevirt-velero-annotations-remover:latest
+          image: quay.io/migtools/kubevirt-velero-annotations-remover-go:latest
           imagePullPolicy: Always
-          env:
-            - name: PYTHONUNBUFFERED
-              value: "1"
           ports:
             - containerPort: 8443
           volumeMounts:

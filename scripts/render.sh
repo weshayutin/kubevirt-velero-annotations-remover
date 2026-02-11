@@ -2,7 +2,7 @@
 set -euo pipefail
 
 NAMESPACE="${NAMESPACE:-openshift-adp}"
-IMAGE="${IMAGE:-quay.io/migtools/kubevirt-velero-annotations-remover:latest}"
+IMAGE="${IMAGE:-quay.io/migtools/kubevirt-velero-annotations-remover-go:latest}"
 
 manifests_dir="openshift-manifests"
 output_dir="rendered"
@@ -13,7 +13,7 @@ for f in 01-pvc.yaml 02-service.yaml 03-webhook.yaml 04-deployment.yaml; do
   sed \
     -e "s/namespace: .*/namespace: ${NAMESPACE}/g" \
     -e "s/kubevirt-velero-annotations-remover\.openshift-adp\./kubevirt-velero-annotations-remover.${NAMESPACE}./g" \
-    -e "s|quay.io/migtools/kubevirt-velero-annotations-remover:latest|${IMAGE}|g" \
+    -e "s|quay.io/migtools/kubevirt-velero-annotations-remover-go:latest|${IMAGE}|g" \
     "$manifests_dir/$f" > "$output_dir/$f"
 done
 

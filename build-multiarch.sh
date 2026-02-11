@@ -2,15 +2,15 @@
 set -euo pipefail
 
 # Usage:
-#   IMAGE=quay.io/migtools/kubevirt-velero-annotations-remover:latest ./scripts/build-multiarch.sh arm64
-#   IMAGE=quay.io/migtools/kubevirt-velero-annotations-remover:latest ./scripts/build-multiarch.sh multi
+#   IMAGE=quay.io/migtools/kubevirt-velero-annotations-remover-go:latest ./scripts/build-multiarch.sh arm64
+#   IMAGE=quay.io/migtools/kubevirt-velero-annotations-remover-go:latest ./scripts/build-multiarch.sh multi
 #
 # Requires: podman 4+ (recommended). For docker, see README.
 
 DATE_STRING=`date +%s`
 # Test w/ ttl.sh
-#IMAGE=ttl.sh/kubevirt-velero-annotations-remover-$DATE_STRING:8h
-IMAGE=quay.io/migtools/kubevirt-velero-annotations-remover:latest
+#IMAGE=ttl.sh/kubevirt-velero-annotations-remover-go-$DATE_STRING:8h
+IMAGE=quay.io/migtools/kubevirt-velero-annotations-remover-go:latest
 MODE="${1:-multi}"   # values: arm64 | amd64 | multi
 
 case "$MODE" in

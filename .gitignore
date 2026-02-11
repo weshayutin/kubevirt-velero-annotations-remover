@@ -1,1 +1,16 @@
 kargo/
+
+# Go build artifacts
+webhook
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go test artifacts
+*.test
+*.out
+
+# Go dependency directories
+vendor/

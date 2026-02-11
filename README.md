@@ -155,32 +155,20 @@ pod/node-agent-mtrq6                                       1/1     Running   0  
 * service is running
 ```
 whayutin@fedora:~/OPENSHIFT/git/OADP/kubevirt-velero-annotations-remover$ oc logs -f pod/kubevirt-velero-annotations-remover-6f596dfb7b-h9zvd
- * Serving Flask app 'webhook'
- * Debug mode: off
-WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on all addresses (0.0.0.0)
- * Running on https://127.0.0.1:8443
- * Running on https://10.129.2.80:8443
-Press CTRL+C to quit
+time=2026-02-11T14:08:00.000Z level=INFO msg="Starting webhook server..."
 ```
 
 ## SUCCESS
 ```
-2026-01-29 20:57:29,339 - werkzeug - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on all addresses (0.0.0.0)
- * Running on https://127.0.0.1:8443
- * Running on https://10.128.2.221:8443
-2026-01-29 20:57:29,339 - werkzeug - INFO - Press CTRL+C to quit
-2026-01-29 20:58:19,770 - webhook - INFO - Processing CREATE for VM 'my-windows-vm' (pod: unknown, namespace: my-windows-vm)
-2026-01-29 20:58:19,770 - webhook - INFO -   Removing annotation: post.hook.backup.velero.io/command = ["/usr/bin/virt-freezer", "--unfreeze", "--name", "my-windows-vm", "--namespace", "my-windows-vm"]
-2026-01-29 20:58:19,770 - webhook - INFO -   Removing annotation: post.hook.backup.velero.io/container = compute
-2026-01-29 20:58:19,770 - webhook - INFO -   Removing annotation: pre.hook.backup.velero.io/command = ["/usr/bin/virt-freezer", "--freeze", "--name", "my-windows-vm", "--namespace", "my-windows-vm"]
-2026-01-29 20:58:19,770 - webhook - INFO -   Removing annotation: pre.hook.backup.velero.io/container = compute
-2026-01-29 20:58:19,770 - webhook - INFO - Removed 4 Velero backup hook annotation(s) from VM 'my-windows-vm'
-2026-01-29 20:58:19,771 - werkzeug - INFO - 10.128.0.2 - - [29/Jan/2026 20:58:19] "POST /mutate?timeout=10s HTTP/1.1" 200 -
-2026-01-29 20:58:32,731 - webhook - INFO - Processing UPDATE for VM 'my-windows-vm' (pod: virt-launcher-my-windows-vm-g5hkx, namespace: my-windows-vm)
-2026-01-29 20:58:32,731 - webhook - INFO - No Velero annotations found on VM 'my-windows-vm' - no changes needed
-2026-01-29 20:58:32,731 - werkzeug - INFO - 10.128.0.2 - - [29/Jan/2026 20:58:32] "POST /mutate?timeout=10s HTTP/1.1" 200 -
+time=2026-01-29T20:57:29.339Z level=INFO msg="Starting webhook server..."
+time=2026-01-29T20:58:19.770Z level=INFO msg="Processing admission request" operation=CREATE vm=my-windows-vm pod=unknown namespace=my-windows-vm
+time=2026-01-29T20:58:19.770Z level=INFO msg="  Removing annotation" key=post.hook.backup.velero.io/command value="["/usr/bin/virt-freezer", "--unfreeze", "--name", "my-windows-vm", "--namespace", "my-windows-vm"]"
+time=2026-01-29T20:58:19.770Z level=INFO msg="  Removing annotation" key=post.hook.backup.velero.io/container value=compute
+time=2026-01-29T20:58:19.770Z level=INFO msg="  Removing annotation" key=pre.hook.backup.velero.io/command value="["/usr/bin/virt-freezer", "--freeze", "--name", "my-windows-vm", "--namespace", "my-windows-vm"]"
+time=2026-01-29T20:58:19.770Z level=INFO msg="  Removing annotation" key=pre.hook.backup.velero.io/container value=compute
+time=2026-01-29T20:58:19.770Z level=INFO msg="Removed Velero backup hook annotations" count=4 vm=my-windows-vm
+time=2026-01-29T20:58:32.731Z level=INFO msg="Processing admission request" operation=UPDATE vm=my-windows-vm pod=virt-launcher-my-windows-vm-g5hkx namespace=my-windows-vm
+time=2026-01-29T20:58:32.731Z level=INFO msg="No Velero annotations found - no changes needed" vm=my-windows-vm
 
 ```
 
